@@ -739,42 +739,42 @@ def text_to_ints(text):
 # Create your own sentence or use one from the dataset
 checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
 model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
-while True:
-    sent = raw_input(
-        "input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.'(default) \n>>>")
-    if sent.strip() == 'quit':
-        exit()
-    else:
-        text = sent.strip()
-        if not text:
-            text = 'Spellin is difficult, whch is wyh you need to study everyday.'
+with tf.Session() as sess:
+    # Load saved model
+    saver = tf.train.Saver()
+    saver.restore(sess, checkpoint)
+    # random = np.random.randint(0,len(testing_sorted))
+    # text = testing_sorted[random]
+    # text = noise_maker(text, 0.95)
+
+    while True:
+        sent = raw_input(
+            "input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.'(default) \n>>>")
+        if sent.strip() == 'quit':
+            exit()
         else:
-            text = text_to_ints(text)
+            text = sent.strip()
+            if not text:
+                text = 'Spellin is difficult, whch is wyh you need to study everyday.'
+            else:
+                text = text_to_ints(text)
 
-        with tf.Session() as sess:
-            # Load saved model
-            saver = tf.train.Saver()
-            saver.restore(sess, checkpoint)
-            #random = np.random.randint(0,len(testing_sorted))
-            #text = testing_sorted[random]
-            #text = noise_maker(text, 0.95)
+                # Multiply by batch_size to match the model's input parameters
+                answer_logits = sess.run(model.predictions, {model.inputs: [text] * batch_size,
+                                                             model.inputs_length: [len(text)] * batch_size,
+                                                             model.targets_length: [len(text) + 1],
+                                                             model.keep_prob: [1.0]})[0]
 
-            #Multiply by batch_size to match the model's input parameters
-            answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
-                                                         model.inputs_length: [len(text)]*batch_size,
-                                                         model.targets_length: [len(text)+1],
-                                                         model.keep_prob: [1.0]})[0]
+                # Remove the padding from the generated sentence
+                pad = vocab_to_int["<PAD>"]
 
-            # Remove the padding from the generated sentence
-            pad = vocab_to_int["<PAD>"]
+                print('\nText')
+                print('  Word Ids:    {}'.format([i for i in text]))
+                print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
 
-            print('\nText')
-            print('  Word Ids:    {}'.format([i for i in text]))
-            print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
-
-            print('\nSummary')
-            print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
-            print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
+                print('\nSummary')
+                print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
+                print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
 
 
 # Examples of corrected sentences:
