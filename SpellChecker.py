@@ -306,8 +306,6 @@ def model_inputs():
     return inputs, targets, keep_prob, inputs_length, targets_length, max_target_length
 
 
-# In[64]:
-
 def process_encoding_input(targets, vocab_to_int, batch_size):
     '''Remove the last word id from each batch and concat the <GO> to the begining of each batch'''
     
@@ -317,8 +315,6 @@ def process_encoding_input(targets, vocab_to_int, batch_size):
 
     return dec_input
 
-
-# In[65]:
 
 def encoding_layer(rnn_size, sequence_length, num_layers, rnn_inputs, keep_prob, direction):
     '''Create the encoding layer'''
@@ -363,8 +359,6 @@ def encoding_layer(rnn_size, sequence_length, num_layers, rnn_inputs, keep_prob,
             return enc_output, enc_state[0]
 
 
-# In[66]:
-
 def training_decoding_layer(dec_embed_input, targets_length, dec_cell, initial_state, output_layer, 
                             vocab_size, max_target_length):
     '''Create the training logits'''
@@ -385,8 +379,6 @@ def training_decoding_layer(dec_embed_input, targets_length, dec_cell, initial_s
                                                                maximum_iterations=max_target_length)
         return training_logits
 
-
-# In[67]:
 
 def inference_decoding_layer(embeddings, start_token, end_token, dec_cell, initial_state, output_layer,
                              max_target_length, batch_size):
@@ -411,8 +403,6 @@ def inference_decoding_layer(embeddings, start_token, end_token, dec_cell, initi
 
         return inference_logits
 
-
-# In[68]:
 
 def decoding_layer(dec_embed_input, embeddings, enc_output, enc_state, vocab_size, inputs_length, targets_length, 
                    max_target_length, rnn_size, vocab_to_int, keep_prob, batch_size, num_layers, direction):
@@ -465,8 +455,6 @@ def decoding_layer(dec_embed_input, embeddings, enc_output, enc_state, vocab_siz
     return training_logits, inference_logits
 
 
-# In[69]:
-
 def seq2seq_model(inputs, targets, keep_prob, inputs_length, targets_length, max_target_length, 
                   vocab_size, rnn_size, num_layers, vocab_to_int, batch_size, embedding_size, direction):
     '''Use the previous functions to create the training and inference logits'''
@@ -498,15 +486,11 @@ def seq2seq_model(inputs, targets, keep_prob, inputs_length, targets_length, max
     return training_logits, inference_logits
 
 
-# In[70]:
-
 def pad_sentence_batch(sentence_batch):
     """Pad sentences with <PAD> so that each sentence of a batch has the same length"""
     max_sentence = max([len(sentence) for sentence in sentence_batch])
     return [sentence + [vocab_to_int['<PAD>']] * (max_sentence - len(sentence)) for sentence in sentence_batch]
 
-
-# In[71]:
 
 def get_batches(sentences, batch_size, threshold):
     """Batch sentences, noisy sentences, and the lengths of their sentences together.
@@ -542,7 +526,6 @@ def get_batches(sentences, batch_size, threshold):
 
 # *Note: This set of values achieved the best results.*
 
-# In[72]:
 
 # The default parameters
 epochs = 100
@@ -555,8 +538,6 @@ direction = 2
 threshold = 0.95
 keep_probability = 0.75
 
-
-# In[73]:
 
 def build_graph(keep_prob, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction):
 
@@ -619,8 +600,6 @@ def build_graph(keep_prob, rnn_size, num_layers, batch_size, learning_rate, embe
 
 
 # ## Training the Model
-
-# In[74]:
 
 def train(model, epochs, log_string):
     '''Train the RNN'''
@@ -733,23 +712,22 @@ def train(model, epochs, log_string):
                 break
 
 
-# In[ ]:
+def train_model_with_parameter():
+    # Train the model with the desired tuning parameters
+    for keep_probability in [0.75]:
+        for num_layers in [2]:
+            for threshold in [0.95]:
+                log_string = 'kp={},nl={},th={}'.format(keep_probability,
+                                                        num_layers,
+                                                        threshold)
+                model = build_graph(keep_probability, rnn_size, num_layers, batch_size,
+                                    learning_rate, embedding_size, direction)
+                train(model, epochs, log_string)
 
-# Train the model with the desired tuning parameters
-for keep_probability in [0.75]:
-    for num_layers in [2]:
-        for threshold in [0.95]:
-            log_string = 'kp={},nl={},th={}'.format(keep_probability,
-                                                    num_layers,
-                                                    threshold) 
-            model = build_graph(keep_probability, rnn_size, num_layers, batch_size, 
-                                learning_rate, embedding_size, direction)
-            train(model, epochs, log_string)
 
+train_model_with_parameter()
 
 # ## Fixing Custom Sentences
-
-# In[75]:
 
 def text_to_ints(text):
     '''Prepare the text for the model'''
@@ -758,41 +736,44 @@ def text_to_ints(text):
     return [vocab_to_int[word] for word in text]
 
 
-# In[176]:
-
 # Create your own sentence or use one from the dataset
-text = "Spellin is difficult, whch is wyh you need to study everyday."
-text = text_to_ints(text)
+while True:
+    sent = raw_input("input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.' \n>>>")
+    if sent.strip() == 'quit':
+        exit()
+    else:
+        text = sent.strip()
+        text = text_to_ints(text)
 
-#random = np.random.randint(0,len(testing_sorted))
-#text = testing_sorted[random]
-#text = noise_maker(text, 0.95)
+        #random = np.random.randint(0,len(testing_sorted))
+        #text = testing_sorted[random]
+        #text = noise_maker(text, 0.95)
 
-checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
+        checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
 
-model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction) 
+        model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
 
-with tf.Session() as sess:
-    # Load saved model
-    saver = tf.train.Saver()
-    saver.restore(sess, checkpoint)
-    
-    #Multiply by batch_size to match the model's input parameters
-    answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size, 
-                                                 model.inputs_length: [len(text)]*batch_size,
-                                                 model.targets_length: [len(text)+1], 
-                                                 model.keep_prob: [1.0]})[0]
+        with tf.Session() as sess:
+            # Load saved model
+            saver = tf.train.Saver()
+            saver.restore(sess, checkpoint)
 
-# Remove the padding from the generated sentence
-pad = vocab_to_int["<PAD>"] 
+            #Multiply by batch_size to match the model's input parameters
+            answer_logits = sess.run(model.predictions, {model.inputs: [text]*batch_size,
+                                                         model.inputs_length: [len(text)]*batch_size,
+                                                         model.targets_length: [len(text)+1],
+                                                         model.keep_prob: [1.0]})[0]
 
-print('\nText')
-print('  Word Ids:    {}'.format([i for i in text]))
-print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
+        # Remove the padding from the generated sentence
+        pad = vocab_to_int["<PAD>"]
 
-print('\nSummary')
-print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
-print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
+        print('\nText')
+        print('  Word Ids:    {}'.format([i for i in text]))
+        print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
+
+        print('\nSummary')
+        print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
+        print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
 
 
 # Examples of corrected sentences:
