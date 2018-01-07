@@ -1,19 +1,4 @@
-
-# coding: utf-8
-
-# # Creating a Spell Checker
-
-# The objective of this project is to build a model that can take a sentence with spelling mistakes as input, and output the same sentence, but with the mistakes corrected. The data that we will use for this project will be twenty popular books from [Project Gutenberg](http://www.gutenberg.org/ebooks/search/?sort_order=downloads). Our model is designed using grid search to find the optimal architecture, and hyperparameter values. The best results, as measured by sequence loss with 15% of our data, were created using a two-layered network with a bi-direction RNN in the encoding layer and Bahdanau Attention in the decoding layer. [FloydHub's](https://www.floydhub.com/) GPU service was used to train the model.
-# 
-# The sections of the project are:
-# - Loading the Data
-# - Preparing the Data
-# - Building the Model
-# - Training the Model
-# - Fixing Custom Sentences
-# - Summary
-
-# In[1]:
+# -*- coding: utf-8 -*-
 
 import pandas as pd
 import numpy as np
@@ -29,9 +14,10 @@ import re
 from sklearn.model_selection import train_test_split
 
 
-# ## Loading the Data
+import logger.log_manager as LOGGER
 
-# In[2]:
+CI_LOGGER = LOGGER.get_ci_logger()
+
 
 def load_book(path):
     """Load a book from its file"""
@@ -40,39 +26,20 @@ def load_book(path):
         book = f.read()
     return book
 
-
-# In[3]:
-
 # Collect all of the book file names
 path = './books/'
 book_files = [f for f in listdir(path) if isfile(join(path, f))]
 book_files = book_files[1:]
-
-
-# In[4]:
 
 # Load the books using the file names
 books = []
 for book in book_files:
     books.append(load_book(path+book))
 
-
-# In[5]:
-
 # Compare the number of words in each book 
 for i in range(len(books)):
-    print("There are {} words in {}.".format(len(books[i].split()), book_files[i]))
+    CI_LOGGER.info("There are {} words in {}.".format(len(books[i].split()), book_files[i]))
 
-
-# In[9]:
-
-# Check to ensure the text looks alright
-books[0][:500]
-
-
-# ## Preparing the Data
-
-# In[10]:
 
 def clean_text(text):
     '''Remove unwanted characters and extra spaces from the text'''
@@ -93,22 +60,10 @@ def clean_text(text):
     text = re.sub(' +',' ', text)
     return text
 
-
-# In[11]:
-
 # Clean the text of the books
 clean_books = []
 for book in books:
     clean_books.append(clean_text(book))
-
-
-# In[12]:
-
-# Check to ensure the text has been cleaned properly
-clean_books[0][:500]
-
-
-# In[13]:
 
 # Create a dictionary to convert the vocabulary (characters) to integers
 vocab_to_int = {}
@@ -126,43 +81,23 @@ for code in codes:
     count += 1
 
 
-# In[14]:
-
 # Check the size of vocabulary and all of the values
 vocab_size = len(vocab_to_int)
-print("The vocabulary contains {} characters.".format(vocab_size))
-print(sorted(vocab_to_int))
-
-
-# *Note: We could have made this project a little easier by using only lower case words and fewer special characters ($,&,-...), but I want to make this spell checker as useful as possible.*
-
-# In[15]:
+CI_LOGGER.info("The vocabulary contains {} characters.".format(vocab_size))
+CI_LOGGER.info(sorted(vocab_to_int))
 
 # Create another dictionary to convert integers to their respective characters
 int_to_vocab = {}
 for character, value in vocab_to_int.items():
     int_to_vocab[value] = character
 
-
-# In[16]:
-
 # Split the text from the books into sentences.
 sentences = []
 for book in clean_books:
     for sentence in book.split('. '):
         sentences.append(sentence + '.')
-print("There are {} sentences.".format(len(sentences)))
+CI_LOGGER.info("There are {} sentences.".format(len(sentences)))
 
-
-# In[17]:
-
-# Check to ensure the text has been split correctly.
-sentences[:5]
-
-
-# *Note: I expect that you have noticed the very ugly text in the first sentence. We do not need to worry about removing it from any of the books because will be limiting our data to sentences that are shorter than it.*
-
-# In[18]:
 
 # Convert sentences to integers
 int_sentences = []
@@ -174,21 +109,14 @@ for sentence in sentences:
     int_sentences.append(int_sentence)
 
 
-# In[19]:
-
 # Find the length of each sentence
 lengths = []
 for sentence in int_sentences:
     lengths.append(len(sentence))
 lengths = pd.DataFrame(lengths, columns=["counts"])
 
-
-# In[20]:
-
 lengths.describe()
 
-
-# In[21]:
 
 # Limit the data we will use to train our model
 max_length = 92
@@ -200,21 +128,15 @@ for sentence in int_sentences:
     if len(sentence) <= max_length and len(sentence) >= min_length:
         good_sentences.append(sentence)
 
-print("We will use {} to train and test our model.".format(len(good_sentences)))
+CI_LOGGER.info("We will use {} to train and test our model.".format(len(good_sentences)))
 
-
-# *Note: I decided to not use very long or short sentences because they are not as useful for training our model. Shorter sentences are less likely to include an error and the text is more likely to be repetitive. Longer sentences are more difficult to learn due to their length and increase the training time quite a bit. If you are interested in using this model for more than just a personal project, it would be worth using these longer sentence, and much more training data to create a more accurate model.*
-
-# In[22]:
 
 # Split the data into training and testing sentences
 training, testing = train_test_split(good_sentences, test_size = 0.15, random_state = 2)
 
-print("Number of training sentences:", len(training))
-print("Number of testing sentences:", len(testing))
+CI_LOGGER.info("Number of training sentences:", len(training))
+CI_LOGGER.info("Number of testing sentences:", len(testing))
 
-
-# In[23]:
 
 # Sort the sentences by length to reduce padding, which will allow the model to train faster
 training_sorted = []
@@ -229,14 +151,10 @@ for i in range(min_length, max_length+1):
             testing_sorted.append(sentence)
 
 
-# In[24]:
-
 # Check to ensure the sentences have been selected and sorted correctly
 for i in range(5):
-    print(training_sorted[i], len(training_sorted[i]))
+    CI_LOGGER.info(training_sorted[i], len(training_sorted[i]))
 
-
-# In[36]:
 
 letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
            'n','o','p','q','r','s','t','u','v','w','x','y','z',]
@@ -275,21 +193,16 @@ def noise_maker(sentence, threshold):
     return noisy_sentence
 
 
-# *Note: The noise_maker function is used to create spelling mistakes that are similar to those we would make. Sometimes we forget to type a letter, type a letter in the wrong location, or add an extra letter.*
-
-# In[38]:
-
 # Check to ensure noise_maker is making mistakes correctly.
 threshold = 0.9
 for sentence in training_sorted[:5]:
-    print(sentence)
-    print(noise_maker(sentence, threshold))
-    print()
+    CI_LOGGER.info(sentence)
+    CI_LOGGER.info(noise_maker(sentence, threshold))
+    CI_LOGGER.info()
 
 
 # # Building the Model
 
-# In[63]:
 
 def model_inputs():
     '''Create palceholders for inputs to the model'''
@@ -619,8 +532,8 @@ def train(model, epochs, log_string):
         per_epoch = 3 # Test the model 3 times per epoch
         testing_check = (len(training_sorted)//batch_size//per_epoch)-1
 
-        print()
-        print("Training Model: {}".format(log_string))
+        CI_LOGGER.info()
+        CI_LOGGER.info("Training Model: {}".format(log_string))
 
         train_writer = tf.summary.FileWriter('./logs/1/train/{}'.format(log_string), sess.graph)
         test_writer = tf.summary.FileWriter('./logs/1/test/{}'.format(log_string))
@@ -653,7 +566,7 @@ def train(model, epochs, log_string):
                 iteration += 1
 
                 if batch_i % display_step == 0 and batch_i > 0:
-                    print('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Seconds: {:>4.2f}'
+                    CI_LOGGER.info('Epoch {:>3}/{} Batch {:>4}/{} - Loss: {:>6.3f}, Seconds: {:>4.2f}'
                           .format(epoch_i,
                                   epochs, 
                                   batch_i, 
@@ -686,7 +599,7 @@ def train(model, epochs, log_string):
                         test_writer.add_summary(summary, iteration)
 
                     n_batches_testing = batch_i + 1
-                    print('Testing Loss: {:>6.3f}, Seconds: {:>4.2f}'
+                    CI_LOGGER.info('Testing Loss: {:>6.3f}, Seconds: {:>4.2f}'
                           .format(batch_loss_testing / n_batches_testing, 
                                   batch_time_testing))
                     
@@ -695,20 +608,20 @@ def train(model, epochs, log_string):
                     # If the batch_loss_testing is at a new minimum, save the model
                     testing_loss_summary.append(batch_loss_testing)
                     if batch_loss_testing <= min(testing_loss_summary):
-                        print('New Record!') 
+                        CI_LOGGER.info('New Record!') 
                         stop_early = 0
                         checkpoint = "./{}.ckpt".format(log_string)
                         saver = tf.train.Saver()
                         saver.save(sess, checkpoint)
 
                     else:
-                        print("No Improvement.")
+                        CI_LOGGER.info("No Improvement.")
                         stop_early += 1
                         if stop_early == stop:
                             break
 
             if stop_early == stop:
-                print("Stopping Training.")
+                CI_LOGGER.info("Stopping Training.")
                 break
 
 
@@ -724,9 +637,6 @@ def train_model_with_parameter():
                                     learning_rate, embedding_size, direction)
                 train(model, epochs, log_string)
 
-
-# train_model_with_parameter()
-
 # ## Fixing Custom Sentences
 
 def text_to_ints(text):
@@ -736,61 +646,46 @@ def text_to_ints(text):
     return [vocab_to_int[word] for word in text]
 
 
-# Create your own sentence or use one from the dataset
-checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
-model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
-with tf.Session() as sess:
-    # Load saved model
-    saver = tf.train.Saver()
-    saver.restore(sess, checkpoint)
-    # random = np.random.randint(0,len(testing_sorted))
-    # text = testing_sorted[random]
-    # text = noise_maker(text, 0.95)
+if __name__ == '__main__':
+    # train_model_with_parameter()
 
-    while True:
-        sent = raw_input(
-            "input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.'(default) \n>>>")
-        if sent.strip() == 'quit':
-            exit()
-        else:
-            text = sent.strip()
-            if not text:
-                text = 'Spellin is difficult, whch is wyh you need to study everyday.'
+    # Create your own sentence or use one from the dataset
+    checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
+    model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
 
-            text = text_to_ints(text)
+    with tf.Session() as sess:
+        # Load saved model
+        saver = tf.train.Saver()
+        saver.restore(sess, checkpoint)
+        # random = np.random.randint(0,len(testing_sorted))
+        # text = testing_sorted[random]
+        # text = noise_maker(text, 0.95)
 
-            # Multiply by batch_size to match the model's input parameters
-            answer_logits = sess.run(model.predictions, {model.inputs: [text] * batch_size,
-                                                         model.inputs_length: [len(text)] * batch_size,
-                                                         model.targets_length: [len(text) + 1],
-                                                         model.keep_prob: [1.0]})[0]
+        while True:
+            sent = raw_input(
+                "input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.'(default) \n>>>")
+            if sent.strip() == 'quit':
+                exit()
+            else:
+                text = sent.strip()
+                if not text:
+                    text = 'Spellin is difficult, whch is wyh you need to study everyday.'
 
-            # Remove the padding from the generated sentence
-            pad = vocab_to_int["<PAD>"]
+                text = text_to_ints(text)
 
-            print('\nText')
-            print('  Word Ids:    {}'.format([i for i in text]))
-            print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
+                # Multiply by batch_size to match the model's input parameters
+                answer_logits = sess.run(model.predictions, {model.inputs: [text] * batch_size,
+                                                             model.inputs_length: [len(text)] * batch_size,
+                                                             model.targets_length: [len(text) + 1],
+                                                             model.keep_prob: [1.0]})[0]
 
-            print('\nSummary')
-            print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
-            print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
+                # Remove the padding from the generated sentence
+                pad = vocab_to_int["<PAD>"]
 
+                CI_LOGGER.info('\nText')
+                CI_LOGGER.info('  Word Ids:    {}'.format([i for i in text]))
+                CI_LOGGER.info('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
 
-# Examples of corrected sentences:
-# - Spellin is difficult, whch is wyh you need to study everyday.
-# - Spelling is difficult, which is why you need to study everyday.
-# 
-# 
-# - The first days of her existence in th country were vrey hard for Dolly. 
-# - The first days of her existence in the country were very hard for Dolly.
-# 
-# 
-# - Thi is really something impressiv thaat we should look into right away! 
-# - This is really something impressive that we should look into right away!
-
-# ## Summary
-
-# I hope that you have found this project to be rather interesting and useful. The example sentences that I have presented above were specifically chosen, and the model will not always be able to make corrections of this quality. Given the amount of data that we are working with, this model still struggles. For it to be more useful, it would require far more training data, and additional parameter tuning. This parameter values that I have above worked best for me, but I expect there are even better values that I was not able to find.
-# 
-# Thanks for reading!
+                CI_LOGGER.info('\nSummary')
+                CI_LOGGER.info('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
+                CI_LOGGER.info('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
