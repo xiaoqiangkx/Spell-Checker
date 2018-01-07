@@ -2,3 +2,6 @@ books/*
 __MACOSX/*
 .idea/*
 logs/*
+*.pyc
+test_logs/*
+checkpoint/*
