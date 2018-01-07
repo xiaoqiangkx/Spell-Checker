@@ -756,25 +756,25 @@ with tf.Session() as sess:
             text = sent.strip()
             if not text:
                 text = 'Spellin is difficult, whch is wyh you need to study everyday.'
-            else:
-                text = text_to_ints(text)
 
-                # Multiply by batch_size to match the model's input parameters
-                answer_logits = sess.run(model.predictions, {model.inputs: [text] * batch_size,
-                                                             model.inputs_length: [len(text)] * batch_size,
-                                                             model.targets_length: [len(text) + 1],
-                                                             model.keep_prob: [1.0]})[0]
+            text = text_to_ints(text)
 
-                # Remove the padding from the generated sentence
-                pad = vocab_to_int["<PAD>"]
+            # Multiply by batch_size to match the model's input parameters
+            answer_logits = sess.run(model.predictions, {model.inputs: [text] * batch_size,
+                                                         model.inputs_length: [len(text)] * batch_size,
+                                                         model.targets_length: [len(text) + 1],
+                                                         model.keep_prob: [1.0]})[0]
 
-                print('\nText')
-                print('  Word Ids:    {}'.format([i for i in text]))
-                print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
+            # Remove the padding from the generated sentence
+            pad = vocab_to_int["<PAD>"]
 
-                print('\nSummary')
-                print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
-                print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
+            print('\nText')
+            print('  Word Ids:    {}'.format([i for i in text]))
+            print('  Input Words: {}'.format("".join([int_to_vocab[i] for i in text])))
+
+            print('\nSummary')
+            print('  Word Ids:       {}'.format([i for i in answer_logits if i != pad]))
+            print('  Response Words: {}'.format("".join([int_to_vocab[i] for i in answer_logits if i != pad])))
 
 
 # Examples of corrected sentences:
