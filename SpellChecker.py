@@ -737,21 +737,23 @@ def text_to_ints(text):
 
 
 # Create your own sentence or use one from the dataset
-while True:
-    checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
-
-    model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
-    sent = raw_input("input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.' \n>>>")
-    with tf.Session() as sess:
-        # Load saved model
-        saver = tf.train.Saver()
-        saver.restore(sess, checkpoint)
-
+checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
+model = build_graph(keep_probability, rnn_size, num_layers, batch_size, learning_rate, embedding_size, direction)
+with tf.Session() as sess:
+    # Load saved model
+    saver = tf.train.Saver()
+    saver.restore(sess, checkpoint)
+    while True:
+        sent = raw_input(
+            "input sentence: 'Spellin is difficult, whch is wyh you need to study everyday.'(default) \n>>>")
         if sent.strip() == 'quit':
             exit()
         else:
             text = sent.strip()
-            text = text_to_ints(text)
+            if not text:
+                text = 'Spellin is difficult, whch is wyh you need to study everyday.'
+            else:
+                text = text_to_ints(text)
 
             #random = np.random.randint(0,len(testing_sorted))
             #text = testing_sorted[random]
