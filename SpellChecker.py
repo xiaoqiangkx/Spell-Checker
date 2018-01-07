@@ -134,8 +134,8 @@ CI_LOGGER.info("We will use {} to train and test our model.".format(len(good_sen
 # Split the data into training and testing sentences
 training, testing = train_test_split(good_sentences, test_size = 0.15, random_state = 2)
 
-CI_LOGGER.info("Number of training sentences:", len(training))
-CI_LOGGER.info("Number of testing sentences:", len(testing))
+CI_LOGGER.info("Number of training sentences:{}".format(len(training)))
+CI_LOGGER.info("Number of testing sentences:{}".format(len(testing)))
 
 
 # Sort the sentences by length to reduce padding, which will allow the model to train faster
