@@ -153,7 +153,7 @@ for i in range(min_length, max_length+1):
 
 # Check to ensure the sentences have been selected and sorted correctly
 for i in range(5):
-    CI_LOGGER.info(training_sorted[i], len(training_sorted[i]))
+    CI_LOGGER.info("{0}, {1}".format(training_sorted[i], len(training_sorted[i])))
 
 
 letters = ['a','b','c','d','e','f','g','h','i','j','k','l','m',
@@ -647,7 +647,7 @@ def text_to_ints(text):
 
 
 if __name__ == '__main__':
-    # train_model_with_parameter()
+    train_model_with_parameter()
 
     # Create your own sentence or use one from the dataset
     checkpoint = "./kp=0.75,nl=2,th=0.95.ckpt"
