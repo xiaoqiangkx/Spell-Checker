@@ -198,7 +198,7 @@ threshold = 0.9
 for sentence in training_sorted[:5]:
     CI_LOGGER.info(sentence)
     CI_LOGGER.info(noise_maker(sentence, threshold))
-    CI_LOGGER.info()
+    CI_LOGGER.info("\n")
 
 
 # # Building the Model
@@ -532,7 +532,7 @@ def train(model, epochs, log_string):
         per_epoch = 3 # Test the model 3 times per epoch
         testing_check = (len(training_sorted)//batch_size//per_epoch)-1
 
-        CI_LOGGER.info()
+        CI_LOGGER.info("\n")
         CI_LOGGER.info("Training Model: {}".format(log_string))
 
         train_writer = tf.summary.FileWriter('./logs/1/train/{}'.format(log_string), sess.graph)
